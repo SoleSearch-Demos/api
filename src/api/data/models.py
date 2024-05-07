@@ -1,8 +1,20 @@
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
+from beanie import Document
 from core.models.shoes import SneakerView
+from fastapi_users_db_beanie import BeanieBaseUser
+from fastapi_users_db_beanie.access_token import BeanieBaseAccessToken
 from pydantic import BaseModel
+
+
+class User(BeanieBaseUser, Document):
+    favorites: List[str] = []
+    size: Optional[int] = None
+
+
+class AccessToken(BeanieBaseAccessToken, Document):
+    pass
 
 
 class PaginatedSneakersResponse(BaseModel):

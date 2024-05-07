@@ -1,9 +1,12 @@
 __version__ = "2.2.0"
 
 import os
+from contextlib import asynccontextmanager
 
 from core.models import Token
 from dotenv import load_dotenv
+
+from api.data.models import AccessToken, User
 
 # Load environment variables from .env file if not running in AWS Lambda
 if not os.environ.get("AWS_EXECUTION_ENV"):
@@ -32,7 +35,21 @@ desc = """
 
 """
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_beanie(
+        database=client.get_database(DATABASE_NAME),
+        document_models=[Sneaker, Token, User, AccessToken],
+    )
+    # Include all routers
+    app.include_router(sneakers.router)
+    app.include_router(auth.router)
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     redoc_url=None,
     docs_url=None,
     title="SoleSearch",
@@ -53,18 +70,6 @@ app.add_middleware(
 # Enable session handling for StocxkX OAuth flow
 SESSION_SECRET = os.environ.get("SOLESEARCH_SESSION_SECRET", "this should be a secret")
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
-
-
-@app.on_event("startup")
-async def startup_event():
-    # Initialize Beanie ODM
-    await init_beanie(
-        database=client.get_database(DATABASE_NAME),
-        document_models=[Sneaker, Token],
-    )
-    # Include all routers
-    app.include_router(sneakers.router)
-    app.include_router(auth.router)
 
 
 @app.get("/docs", include_in_schema=False)

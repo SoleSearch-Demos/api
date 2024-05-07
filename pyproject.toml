@@ -17,6 +17,7 @@ dependencies = [
   "python-dotenv",
   "uvicorn",
   "pydantic",
+  "fastapi-users[beanie]",
   "mangum",
   "requests",
   "Starlette",
